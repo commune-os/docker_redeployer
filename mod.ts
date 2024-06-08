@@ -1,41 +1,22 @@
 import { Server } from "https://deno.land/std@0.161.0/http/server.ts";
 
-const containerName = Deno.env.get("CONTAINER");
-const containerImage = Deno.env.get("IMAGE");
-
 async function updateContainer() {
   console.log("Updating container");
 
   // Stop the container if it is already running
-  await Deno.run({ cmd: ["docker", "stop", containerName] }).status();
-
-  // Remove the old container if it exists
-  await Deno.run({ cmd: ["docker", "rm", containerName] }).status();
-
-  // Pull the latest version of the container
   let status = await Deno.run({
-    cmd: ["docker", "pull", containerImage],
+    cmd: ["docker", "compose", "--project-directory", "/compose", "pull"],
   }).status();
   if (!status.success) {
-    console.error("Error pulling docker container");
-    return;
+    console.error("Error running `docker compose pull`");
   }
 
-  // Run the new container
+  // Remove the old container if it exists
   status = await Deno.run({
-    cmd: [
-      "docker",
-      "pull",
-      "-d",
-      "--name",
-      containerName,
-      "-p",
-      "65534:8943/udp",
-      containerImage,
-    ],
+    cmd: ["docker", "compose", "--project-directory", "/compose", "up", "-d"],
   }).status();
   if (!status.success) {
-    console.error("Error running docker container");
+    console.error("Error running `docker compose up -d`");
   }
 }
 
